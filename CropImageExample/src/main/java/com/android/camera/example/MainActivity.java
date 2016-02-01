@@ -62,6 +62,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
             CropImageIntentBuilder cropImage = new CropImageIntentBuilder(200, 200, croppedImage);
             cropImage.setOutlineColor(0xFF03A9F4);
             cropImage.setSourceImage(data.getData());
+            cropImage.setCircleCrop(true);
+            cropImage.setOutlineCircleColor(getResources().getColor(R.color.transpement));
 
             startActivityForResult(cropImage.getIntent(this), REQUEST_CROP_PICTURE);
         } else if ((requestCode == REQUEST_CROP_PICTURE) && (resultCode == RESULT_OK)) {

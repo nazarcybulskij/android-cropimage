@@ -17,7 +17,10 @@
 package com.android.camera;
 
 import com.android.camera.R;
+import com.android.camera.edge.Edge;
+import com.android.camera.util.PaintUtil;
 
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -50,6 +53,18 @@ class HighlightView {
     private final int mOutlineColor;
     private final int mOutlineCircleColor;
 
+    // Thickness of the line (in pixels) used to draw the corner handle.
+    private float mCornerThickness;
+
+    // Thickness of the line (in pixels) used to draw the border of the crop window.
+    private float mBorderThickness;
+
+    // Length of one side of the corner handle.
+    private float mCornerLength;
+
+    // The Paint used to draw the corners of the Border
+    private Paint mCornerPaint;
+
     public HighlightView(View ctx) {
         this(ctx, DEFAULT_OUTLINE_COLOR, DEFAULT_OUTLINE_CIRCLE_COLOR);
     }
@@ -68,6 +83,14 @@ class HighlightView {
                 resources.getDrawable(R.drawable.camera_crop_height);
         mResizeDrawableDiagonal =
                 resources.getDrawable(R.drawable.indicator_autocrop);
+
+        mBorderThickness = resources.getDimension(R.dimen.border_thickness);
+        mCornerThickness = resources.getDimension(R.dimen.corner_thickness);
+        mCornerLength = resources.getDimension(R.dimen.corner_length);
+        mCornerPaint = PaintUtil.newCornerPaint(resources);
+
+
+
     }
 
     boolean mIsFocused;
@@ -97,7 +120,8 @@ class HighlightView {
         } else {
             Rect viewDrawingRect = new Rect();
             mContext.getDrawingRect(viewDrawingRect);
-            if (mCircle) {
+           // if (mCircle) {
+
                 float width  = mDrawRect.width();
                 float height = mDrawRect.height();
                 path.addCircle(mDrawRect.left + (width  / 2),
@@ -105,10 +129,10 @@ class HighlightView {
                                width / 2,
                                Path.Direction.CW);
                 mOutlinePaint.setColor(mOutlineCircleColor);
-            } else {
-                path.addRect(new RectF(mDrawRect), Path.Direction.CW);
-                mOutlinePaint.setColor(mOutlineColor);
-            }
+//            } else {
+//                path.addRect(new RectF(mDrawRect), Path.Direction.CW);
+//                mOutlinePaint.setColor(mOutlineColor);
+//            }
             canvas.clipPath(path, Region.Op.DIFFERENCE);
             canvas.drawRect(viewDrawingRect,
                     hasFocus() ? mFocusPaint : mNoFocusPaint);
@@ -116,22 +140,24 @@ class HighlightView {
             canvas.restore();
             canvas.drawPath(path, mOutlinePaint);
 
-            if (mMode == ModifyMode.Grow) {
-                if (mCircle) {
-                    int width  = mResizeDrawableDiagonal.getIntrinsicWidth();
-                    int height = mResizeDrawableDiagonal.getIntrinsicHeight();
+            drawCorners(canvas,mDrawRect);
 
-                    int d  = (int) Math.round(Math.cos(/*45deg*/Math.PI / 4D)
-                            * (mDrawRect.width() / 2D));
-                    int x  = mDrawRect.left
-                            + (mDrawRect.width() / 2) + d - width / 2;
-                    int y  = mDrawRect.top
-                            + (mDrawRect.height() / 2) - d - height / 2;
-                    mResizeDrawableDiagonal.setBounds(x, y,
-                            x + mResizeDrawableDiagonal.getIntrinsicWidth(),
-                            y + mResizeDrawableDiagonal.getIntrinsicHeight());
-                    mResizeDrawableDiagonal.draw(canvas);
-                } else {
+            if (mMode == ModifyMode.Grow) {
+//                if (mCircle) {
+//                    int width  = mResizeDrawableDiagonal.getIntrinsicWidth();
+//                    int height = mResizeDrawableDiagonal.getIntrinsicHeight();
+//
+//                    int d  = (int) Math.round(Math.cos(/*45deg*/Math.PI / 4D)
+//                            * (mDrawRect.width() / 2D));
+//                    int x  = mDrawRect.left
+//                            + (mDrawRect.width() / 2) + d - width / 2;
+//                    int y  = mDrawRect.top
+//                            + (mDrawRect.height() / 2) - d - height / 2;
+//                    mResizeDrawableDiagonal.setBounds(x, y,
+//                            x + mResizeDrawableDiagonal.getIntrinsicWidth(),
+//                            y + mResizeDrawableDiagonal.getIntrinsicHeight());
+//                    mResizeDrawableDiagonal.draw(canvas);
+//                } else {
                     int left    = mDrawRect.left   + 1;
                     int right   = mDrawRect.right  + 1;
                     int top     = mDrawRect.top    + 4;
@@ -152,31 +178,71 @@ class HighlightView {
                             + ((mDrawRect.bottom - mDrawRect.top) / 2);
 
                     mResizeDrawableWidth.setBounds(left - widthWidth,
-                                                   yMiddle - widthHeight,
-                                                   left + widthWidth,
-                                                   yMiddle + widthHeight);
-                    mResizeDrawableWidth.draw(canvas);
+                            yMiddle - widthHeight,
+                            left + widthWidth,
+                            yMiddle + widthHeight);
+                    //mResizeDrawableWidth.draw(canvas);
 
                     mResizeDrawableWidth.setBounds(right - widthWidth,
-                                                   yMiddle - widthHeight,
-                                                   right + widthWidth,
-                                                   yMiddle + widthHeight);
-                    mResizeDrawableWidth.draw(canvas);
+                            yMiddle - widthHeight,
+                            right + widthWidth,
+                            yMiddle + widthHeight);
+                    //mResizeDrawableWidth.draw(canvas);
 
                     mResizeDrawableHeight.setBounds(xMiddle - heightWidth,
                                                     top - heightHeight,
                                                     xMiddle + heightWidth,
                                                     top + heightHeight);
-                    mResizeDrawableHeight.draw(canvas);
+                    //mResizeDrawableHeight.draw(canvas);
 
                     mResizeDrawableHeight.setBounds(xMiddle - heightWidth,
-                                                    bottom - heightHeight,
-                                                    xMiddle + heightWidth,
-                                                    bottom + heightHeight);
-                    mResizeDrawableHeight.draw(canvas);
-                }
+                            bottom - heightHeight,
+                            xMiddle + heightWidth,
+                            bottom + heightHeight);
+                    //mResizeDrawableHeight.draw(canvas);
+               // }
             }
         }
+    }
+
+
+    private void drawCorners(Canvas canvas,Rect rect) {
+
+//        final float left = Edge.LEFT.getCoordinate();
+//        final float top = Edge.TOP.getCoordinate();
+//        final float right = Edge.RIGHT.getCoordinate();
+//        final float bottom = Edge.BOTTOM.getCoordinate();
+
+
+        final float left = rect.left;
+        final float top = rect.top;
+        final float right = rect.right;
+        final float bottom = rect.bottom;
+
+        // Absolute value of the offset by which to draw the corner line such that its inner edge is flush with the border's inner edge.
+        final float lateralOffset = (mCornerThickness - mBorderThickness) / 2f;
+        // Absolute value of the offset by which to start the corner line such that the line is drawn all the way to form a corner edge with the adjacent side.
+        final float startOffset = mCornerThickness - (mBorderThickness / 2f);
+
+        // Top-left corner: left side
+        canvas.drawLine(left - lateralOffset, top - startOffset, left - lateralOffset, top + mCornerLength, mCornerPaint);
+        // Top-left corner: top side
+        canvas.drawLine(left - startOffset, top - lateralOffset, left + mCornerLength, top - lateralOffset, mCornerPaint);
+
+        // Top-right corner: right side
+        canvas.drawLine(right + lateralOffset, top - startOffset, right + lateralOffset, top + mCornerLength, mCornerPaint);
+        // Top-right corner: top side
+        canvas.drawLine(right + startOffset, top - lateralOffset, right - mCornerLength, top - lateralOffset, mCornerPaint);
+
+        // Bottom-left corner: left side
+        canvas.drawLine(left - lateralOffset, bottom + startOffset, left - lateralOffset, bottom - mCornerLength, mCornerPaint);
+        // Bottom-left corner: bottom side
+        canvas.drawLine(left - startOffset, bottom + lateralOffset, left + mCornerLength, bottom + lateralOffset, mCornerPaint);
+
+        // Bottom-right corner: right side
+        canvas.drawLine(right + lateralOffset, bottom + startOffset, right + lateralOffset, bottom - mCornerLength, mCornerPaint);
+        // Bottom-right corner: bottom side
+        canvas.drawLine(right + startOffset, bottom + lateralOffset, right - mCornerLength, bottom + lateralOffset, mCornerPaint);
     }
 
     public void setMode(ModifyMode mode) {
@@ -192,33 +258,33 @@ class HighlightView {
         final float hysteresis = 20F;
         int retval = GROW_NONE;
 
-        if (mCircle) {
-            float distX = x - r.centerX();
-            float distY = y - r.centerY();
-            int distanceFromCenter =
-                    (int) Math.sqrt(distX * distX + distY * distY);
-            int radius  = mDrawRect.width() / 2;
-            int delta = distanceFromCenter - radius;
-            if (Math.abs(delta) <= hysteresis) {
-                if (Math.abs(distY) > Math.abs(distX)) {
-                    if (distY < 0) {
-                        retval = GROW_TOP_EDGE;
-                    } else {
-                        retval = GROW_BOTTOM_EDGE;
-                    }
-                } else {
-                    if (distX < 0) {
-                        retval = GROW_LEFT_EDGE;
-                    } else {
-                        retval = GROW_RIGHT_EDGE;
-                    }
-                }
-            } else if (distanceFromCenter < radius) {
-                retval = MOVE;
-            } else {
-                retval = GROW_NONE;
-            }
-        } else {
+//        if (mCircle) {
+//            float distX = x - r.centerX();
+//            float distY = y - r.centerY();
+//            int distanceFromCenter =
+//                    (int) Math.sqrt(distX * distX + distY * distY);
+//            int radius  = mDrawRect.width() / 2;
+//            int delta = distanceFromCenter - radius;
+//            if (Math.abs(delta) <= hysteresis) {
+//                if (Math.abs(distY) > Math.abs(distX)) {
+//                    if (distY < 0) {
+//                        retval = GROW_TOP_EDGE;
+//                    } else {
+//                        retval = GROW_BOTTOM_EDGE;
+//                    }
+//                } else {
+//                    if (distX < 0) {
+//                        retval = GROW_LEFT_EDGE;
+//                    } else {
+//                        retval = GROW_RIGHT_EDGE;
+//                    }
+//                }
+//            } else if (distanceFromCenter < radius) {
+//                retval = MOVE;
+//            } else {
+//                retval = GROW_NONE;
+//            }
+//        } else {
             // verticalCheck makes sure the position is between the top and
             // the bottom edge (with some tolerance). Similar for horizCheck.
             boolean verticalCheck = (y >= r.top - hysteresis)
@@ -244,7 +310,7 @@ class HighlightView {
             if (retval == GROW_NONE && r.contains((int) x, (int) y)) {
                 retval = MOVE;
             }
-        }
+       // }
         return retval;
     }
 
@@ -385,7 +451,7 @@ class HighlightView {
         mCropRect = cropRect;
         mImageRect = new RectF(imageRect);
         mMaintainAspectRatio = maintainAspectRatio;
-        mCircle = circle;
+        //mCircle = circle;
 
         mInitialAspectRatio = mCropRect.width() / mCropRect.height();
         mDrawRect = computeLayout();
@@ -411,7 +477,7 @@ class HighlightView {
 
     private boolean mMaintainAspectRatio = false;
     private float mInitialAspectRatio;
-    private boolean mCircle = false;
+    //private boolean mCircle = false;
 
     private Drawable mResizeDrawableWidth;
     private Drawable mResizeDrawableHeight;
